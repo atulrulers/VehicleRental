@@ -33,11 +33,13 @@ public class BookingService implements IBookingService {
 
                 final Vehicle vehicle = availableVehicleList.get(0);
                 availableVehicleList.remove(0);
-
                 final BookingDetails bookingDetails = BookingDetails.builder()
                                                                     .bookingId(UUID.randomUUID()
                                                                                    .toString())
-                                                                    .bookingAmount(bookingHours * vehicle.getRate())
+                                                                    .bookingAmount(calculateBookingAmount(bookingHours,
+                                                                            vehicle, branchInfo.getVehicleCount()
+                                                                                               .get(vehicleType),
+                                                                            availableVehicleList.size() + 1L))
                                                                     .build();
 
                 final BookedVehicle bookedVehicle = BookedVehicle.builder()
@@ -107,5 +109,16 @@ public class BookingService implements IBookingService {
                                     .getVehicleType())
                   .add(bookedVehicle.getVehicle());
 
+    }
+
+    private Double calculateBookingAmount(final Long bookingHours, final Vehicle vehicle,
+            final Long totalVehicleInBranch, final Long availableVehicle) {
+        double availableVehicleFraction = (double) availableVehicle / totalVehicleInBranch;
+        if (availableVehicleFraction < 0.2) {
+            // surge price
+            return (vehicle.getRate() * 1.1 * bookingHours);
+        } else {
+            return (vehicle.getRate() * bookingHours);
+        }
     }
 }
